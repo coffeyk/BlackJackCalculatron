@@ -6,30 +6,36 @@ Created on Dec 17, 2012
 
 from BlackJack.Helpers import cardLookup, faceValue, FACE_VALUE, Action
 
-# TODO: Remove the list dependency for accessing cards
-class Hand(list):
+class Hand:
     '''
     Contains all the important info about a player's hand. 
     '''
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, cards=None):
         '''
         Constructor
         '''
-        super(Hand, self).__init__(*args, **kwargs)
+        # Expressions in default arguments are only calculated once, so we need this check!
+        if cards is None:
+            cards = list()
+        
+        self.cards = cards
         self.action = list()
         self.bet = 0
-        self.insurance = 0
+        self.insurance = False
 
     def __str__(self):
-        return ("I" if self.insurance else "") + " ".join(("%2s%s" % cardLookup(c) for c in iter(self)))
+        return ("I" if self.insurance else "") + " ".join(("%2s%s" % cardLookup(c) for c in self.cards))
+    
+    def __repr__(self):
+        return self.__str__()
     
     def minHandSum(self):
         '''
         Returns the hand value counting Aces as 1.
         '''
         handSum = 0
-        for card in self:
+        for card in self.cards:
             handSum += faceValue(card)
         return handSum
         # # This is slower:
@@ -51,13 +57,13 @@ class Hand(list):
         Returns True if the hand contains an Ace that could
         count as an 11 without busting.
         '''
-        return (self.minHandSum() + 10 <= 21) and (FACE_VALUE[0] in (faceValue(c) for c in self))
+        return (self.minHandSum() + 10 <= 21) and (FACE_VALUE[0] in (faceValue(c) for c in self.cards))
     
     def isBJ(self):
         '''
         Returns True if the hand is a Black Jack.
         '''
-        return (len(self) == 2) and self.isSoft() and self.minHandSum() == 11 and (Action.Split) not in list(self.action)
+        return (len(self.cards) == 2) and self.isSoft() and self.minHandSum() == 11 and (Action.Split) not in list(self.action)
 
     def isWinner(self, dealer):
         '''
