@@ -114,11 +114,9 @@ class Game:
         Plays a single round of Black Jack.
         '''
         # Give the players new hands
-        for player in self.players:
-            player.hands = [Hand()]
-        
         # 0)
         for player in self.players:
+            player.hands = [Hand()]
             player.hands[0].bet = player.getBet(self.count[-1])
         # 1)
         for _ in xrange(2):
@@ -142,7 +140,10 @@ class Game:
             # Dealer ACE UP
             # Offer insurance
             for player in self.players:
-                player.insurance(self.count[-1])
+                # The running count takes into consideration the dealers hole card,
+                # which was the last card dealt. Therefore insurance should
+                # be offered with the second to last count 
+                player.insurance(self.count[-2])
         
         if dealerHand.isBJ():
             # Dealer BJ
@@ -150,14 +151,13 @@ class Game:
         else:
             # 3) Offer cards
             allBust = True
-            for player in self.players:
+            for player in self.players[:-1]:
+                allBust &= self.playersTurn(player, dealerFaceValue)
                 
-                # Dealer is last player
-                if player == self.dealer and allBust:
-                    # Don't playRound dealer when everyone else is gone
-                        continue
-                else:
-                    allBust &= self.playersTurn(player, dealerFaceValue)
+            # Dealer is last player
+            # Don't playRound dealer when everyone else is gone
+            if not allBust:
+                self.playersTurn(self.dealer, dealerFaceValue)
 
         # pprint ([str(player) for player in self.players])
         self.archive()
@@ -167,23 +167,26 @@ class Game:
         '''
         Handles the given player's turn to play.
         '''
-        busted = True
+        # Assume the player busts by default
+        previousHandsBust = True
         SPLIT_ACES = False
         for (hi, hand) in enumerate(player.hands):
             cards = hand.cards
-            # give other split its 2nd card
             if (len(cards) < 2):
+            # give newly created split hand its 2nd card
                 cards.append(self.getCard())
                 
             if hand.isBJ():
                 continue
             
             if SPLIT_ACES:
+                # Previous hand split Aces, so this hand can't do anything
                 SPLIT_ACES = False
                 continue
 
-            move = 1
-            while move > 0 and hand.minHandSum() < 21:
+            # Default to hit so we make it into the while loop
+            move = Action.Hit
+            while move > Action.Stand and hand.minHandSum() < 21:
                 if player.interactive:
                     print hand
                     print hand.minHandSum()
@@ -202,16 +205,18 @@ class Game:
                     cards.append(self.getCard())
                     if cards[0].faceValue == 1:
                         SPLIT_ACES = True
-                        move = -1   
+                        # Stop after splitting Aces
+                        move = Action.Stand
                 elif move == Action.Double:
-                    # Stop after a double down
                     cards.append(self.getCard())
-                    move = -1             
-            if busted:
+                    # Stop after a double down
+                    move = Action.Stand
+            if previousHandsBust:
                 if hand.minHandSum() <= 21 and not hand.isBJ():
-                    busted = False
+                    # At least one hand requires the dealer to play
+                    previousHandsBust = False
 
-        return busted
+        return previousHandsBust
 
 
     def calcGameHistoryValue(self):

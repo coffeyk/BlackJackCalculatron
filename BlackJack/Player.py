@@ -29,11 +29,15 @@ class Player:
         '''
         # Get the hand in question
         h1 = self.hands[hIndex]
-        self.hands.insert(hIndex + 1, Hand([h1.cards[-1], ]))
-        h1.cards.pop()
-        h2 = self.hands[hIndex + 1]
+        # Take the second card from the original hand and put it in the new hand
+        h2 = Hand([h1.cards.pop(), ])
+        # Transfer over the bet
         h2.bet = h1.bet
+        # Mark this hand a split hand so it won't be detected as BJ
         h2.action.append(Action.Split)
+        # Put the new hand after the old hand
+        self.hands.insert(hIndex + 1, h2)
+        
 
 
     def insurance(self, count):

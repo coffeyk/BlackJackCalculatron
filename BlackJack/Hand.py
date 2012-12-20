@@ -67,7 +67,11 @@ class Hand:
         '''
         Returns True if the hand is a Black Jack.
         '''
-        return (len(self.cards) == 2) and self.isSoft() and self.minHandSum() == 11 and (Action.Split) not in list(self.action)
+        if (len(self.cards) == 2):
+            mHandSum = self.minHandSum()
+            return  mHandSum == 11 and (Action.Split) not in list(self.action) and self.isSoft(mHandSum)
+        else:
+            return False
 
     def isWinner(self, dealer):
         '''
@@ -78,8 +82,7 @@ class Hand:
         #  0   push
         # -1   player lose
         result = 0
-        ds = dealer.maxHandSum()
-        hs = self.maxHandSum()
+
         # Does dealer have blackjack?
         if dealer.isBJ():
             # Do I have blackjack?
@@ -94,14 +97,17 @@ class Hand:
             # BJ win
             result = 1.5
         # Without busting, do I beat the dealer or did the dealer bust?
-        elif (ds < hs <= 21) or (hs <= 21 < ds):
-            # Win
-            result = 1
-        # Without busting, do I tie the dealer?
-        elif (ds == hs) and (hs <= 21):
-            # Push
-            result = 0
         else:
-            # Lose
-            result = -1
+            ds = dealer.maxHandSum()
+            hs = self.maxHandSum()
+            if (ds < hs <= 21) or (hs <= 21 < ds):
+                # Win
+                result = 1
+            # Without busting, do I tie the dealer?
+            elif (ds == hs) and (hs <= 21):
+                # Push
+                result = 0
+            else:
+                # Lose
+                result = -1
         return result
