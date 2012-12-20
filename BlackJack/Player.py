@@ -13,7 +13,7 @@ class Player:
         # Splits create multiple hands
         self.hands = [Hand()]
         # Called to determine the action this player takes
-        self.playFunc = theBook
+        self.getAction = theBook
         # BE the player in this once in a lifetime experience. breaks in multithreading
         self.interactive = False
 
@@ -29,7 +29,7 @@ class Player:
         '''
         # Get the hand in question
         h1 = self.hands[hIndex]
-        self.hands.insert(hIndex + 1, Hand([h1.cards[-1],]))
+        self.hands.insert(hIndex + 1, Hand([h1.cards[-1], ]))
         h1.cards.pop()
         h2 = self.hands[hIndex + 1]
         h2.bet = h1.bet

@@ -17,14 +17,32 @@ class Action:
     '''
     (Stand, Hit, Split, Double) = range(0, 4)
 
+class Card:
+    '''
+    Gives some details about Cards
+    '''
+    
+    def __init__(self, numericalValue):
+        '''
+        Constructor
+        '''
+        self.numericalValue = numericalValue
+        
+        # faceValue is the main reason for making card into its own class
+        self.faceValue = faceValue(self.numericalValue)
+    
+    def cardLookup(self):
+        '''
+        Returns a tuple of Face and Suit Symbols for a card.
+        A card is an integer from 0-51
+        '''
+        face = self.numericalValue % 13
+        suit = self.numericalValue / 13
+        return (FACE[face], SUITS[suit])
+    
 def cardLookup(card):
-    '''
-    Returns a tuple of Face and Suit Symbols for a card.
-    A card is an integer from 0-51
-    '''
-    face = card % 13
-    suit = card / 13
-    return (FACE[face], SUITS[suit])
+    return card.cardLookup()
+
 
 def faceValue(card):
     '''

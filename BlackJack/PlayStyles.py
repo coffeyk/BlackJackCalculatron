@@ -4,7 +4,7 @@ Created on Dec 17, 2012
 @author: Kevin
 '''
 
-from BlackJack.Helpers import cardLookup, faceValue, Action
+from BlackJack.Helpers import cardLookup, Action
 
 def theBook(hand, dealerFV, count):
     '''
@@ -15,7 +15,7 @@ def theBook(hand, dealerFV, count):
     handSum = hand.minHandSum()
     
     cards = hand.cards
-    firstFV = faceValue(cards[0])
+    firstFV = cards[0].faceValue
     
     # hasTwoCards is my check to see if doubling down is available.
     # Should be replaced by a canDouble function when unlimited debt is removed
@@ -53,7 +53,7 @@ def theBook(hand, dealerFV, count):
                 return Action.Split
             else:
                 return Action.Hit
-    elif hand.isSoft():
+    elif hand.isSoft(handSum):
         # Soft Hands
         if handSum >= 10:
             return Action.Stand

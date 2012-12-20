@@ -4,7 +4,7 @@ Created on Dec 17, 2012
 @author: Kevin
 '''     
 
-from BlackJack.Helpers import cardLookup, faceValue, FACE_VALUE, Action
+from BlackJack.Helpers import cardLookup, FACE_VALUE, Action    
 
 class Hand:
     '''
@@ -36,10 +36,10 @@ class Hand:
         '''
         handSum = 0
         for card in self.cards:
-            handSum += faceValue(card)
+            handSum += card.faceValue
         return handSum
         # # This is slower:
-        #    return sum([faceValue(card) for card in hand])
+        #    return sum([card.faceValue for card in hand])
         
     def maxHandSum(self):
         '''
@@ -48,16 +48,20 @@ class Hand:
         '''
         handSum = self.minHandSum()
         # Only have to take into account one Ace, anymore is a guaranteed bust
-        if self.isSoft():
+        if self.isSoft(handSum):
             handSum += 10
         return handSum
     
-    def isSoft(self):
+    def isSoft(self, mHandSum=None):
         '''
         Returns True if the hand contains an Ace that could
         count as an 11 without busting.
         '''
-        return (self.minHandSum() + 10 <= 21) and (FACE_VALUE[0] in (faceValue(c) for c in self.cards))
+        # Don't want to keep calculating minHandSum unnecessarily
+        # Passing in a min hand sum makes this slightly faster. 
+        if mHandSum == None:
+            mHandSum = self.minHandSum()
+        return (mHandSum + 10 <= 21) and (FACE_VALUE[0] in (c.faceValue for c in self.cards))
     
     def isBJ(self):
         '''
@@ -76,24 +80,24 @@ class Hand:
         result = 0
         ds = dealer.maxHandSum()
         hs = self.maxHandSum()
-        #Does dealer have blackjack?
+        # Does dealer have blackjack?
         if dealer.isBJ():
-            #Do I have blackjack?
+            # Do I have blackjack?
             if self.isBJ():
                 # Push
                 result = 0
             else:
                 # Lose
                 result = -1
-        #Do I have blackjack?
+        # Do I have blackjack?
         elif self.isBJ():
             # BJ win
             result = 1.5
-        #Without busting, do I beat the dealer or did the dealer bust?
+        # Without busting, do I beat the dealer or did the dealer bust?
         elif (ds < hs <= 21) or (hs <= 21 < ds):
             # Win
             result = 1
-        #Without busting, do I tie the dealer?
+        # Without busting, do I tie the dealer?
         elif (ds == hs) and (hs <= 21):
             # Push
             result = 0

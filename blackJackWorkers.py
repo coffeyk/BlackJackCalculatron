@@ -17,8 +17,8 @@ def fasterWorkerGame(PLAYERS, getBet=None, numShoes=10000):
     Accumulate the results of several games' fastCalcGameHistoryValue
     for a given number of players, betting strategy, and number of games
     '''
-    value = 0
-    hands = 0
+    netValue = 0
+    netHands = 0
     
     for _ in xrange(numShoes):
         game = Game(players=PLAYERS - 1, decks=6)
@@ -29,12 +29,12 @@ def fasterWorkerGame(PLAYERS, getBet=None, numShoes=10000):
         
         game.playShoe()
 
-        w, h = game.fastCalcGameHistoryValue()
+        value, hands = game.fastCalcGameHistoryValue()
 
-        value += w
-        hands += h
+        netValue += value
+        netHands += hands
 
-    return value / (hands * float((PLAYERS - 1)))
+    return netValue / (netHands * float((PLAYERS - 1)))
 
 def workerGameBet(getBet):
     return workerGame(7, getBet)

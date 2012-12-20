@@ -10,7 +10,7 @@ DEBUG = False
 from BlackJack.Hand import Hand
 from BlackJack.Player import Player
 from BlackJack.PlayStyles import theHouseH17
-from BlackJack.Helpers import faceValue, Action
+from BlackJack.Helpers import Action, Card
 
 import random
 
@@ -21,7 +21,7 @@ def getShoe(decks):
     '''
     Returns a shuffled shoe of n decks
     '''
-    deck = range(52) * decks
+    deck = [Card(c) for c in range(52)] * decks
     random.shuffle(deck)
     return deck
 
@@ -51,7 +51,7 @@ class Game:
 
         # the dealer sits in the last seat and has a special playRound function
         self.dealer = self.players[-1]
-        self.dealer.playFunc = theHouseH17
+        self.dealer.getAction = theHouseH17
 
     def countCard(self, card):
         '''
@@ -62,7 +62,7 @@ class Game:
         # 10- A = -1
         # TODO: Abstract out for different counting strategies
         adj = 0
-        fv = faceValue(card)
+        fv = card.faceValue
         if (2 <= fv <= 7):
             adj = 1
         elif 10 == fv or fv == 1:
@@ -84,7 +84,7 @@ class Game:
         '''
         Stores the results of the round
         '''
-        # TODO: use a nicer format for recording logs
+        # TODO: use a nicer format for recording logs, perhaps a dictionary
         historyEntry = [(playerIdx, hand, hand.isWinner(self.dealer.hands[0]))
                         for (playerIdx, player) in enumerate(self.players)
                             for hand in player.hands]
@@ -126,7 +126,7 @@ class Game:
                 player.hands[0].cards.append(self.getCard())
 
         dealerHand = self.dealer.hands[0]
-        dealerFaceValue = faceValue(dealerHand.cards[0])
+        dealerFaceValue = dealerHand.cards[0].faceValue
 
         if INTERACTIVE:
             for player in self.players:
@@ -190,7 +190,7 @@ class Game:
                     print """0)S 1)H 2)SP 3)DD """
                     move = input("What!: ")
                 else:
-                    move = player.playFunc(hand, dealerFaceValue, self.count[-1])
+                    move = player.getAction(hand, dealerFaceValue, self.count[-1])
                 # Blindly accept players move
                 # TODO: Validate player move
                 hand.action.append(int(move))
@@ -200,7 +200,7 @@ class Game:
                 elif move == Action.Split:
                     player.split(hi)
                     cards.append(self.getCard())
-                    if faceValue(cards[0]) == 1:
+                    if cards[0].faceValue == 1:
                         SPLIT_ACES = True
                         move = -1   
                 elif move == Action.Double:
@@ -224,8 +224,8 @@ class Game:
         # Keep track of the number of cards dealt so the count can be displayed
         cards = 0
         
-        dealer = self.history[0][-1]
-        dealerId = dealer[0]
+        dealerEntry = self.history[0][-1]
+        dealerId = dealerEntry[0]
         
         numPlayers = dealerId + 1
         wins = [0, ] * numPlayers
@@ -236,20 +236,16 @@ class Game:
                 print "%3d $%d" % (self.count[cards], self.dealer.getBet(self.count[cards]))
                 print "%2i)  " % roundId,
             
-            # dealer's wins tracks number of historyEntry per game
+            # dealerEntry's wins tracks number of historyEntry per game
             wins[dealerId] += 1
             
-            dealer = historyEntry[-1]
-            dealerHand = dealer[1]
+            dealerEntry = historyEntry[-1]
+            dealerHand = dealerEntry[1]
     
             if DEBUG:
                 print "%2d: " % dealerHand.maxHandSum(),
                 print dealerHand
-            for handEntry in historyEntry[:-1]:
-                playerID = handEntry[0]
-                hand = handEntry[1]
-                result = handEntry[2]
-                
+            for (playerID, hand, result) in historyEntry[:-1]:
                 cards += len(hand.cards)
                 
                 # Did the player double down this hand?
@@ -285,14 +281,11 @@ class Game:
         
         winnings = 0
         for historyEntry in self.history:           
-            dealer = historyEntry[-1]
-            dealerHand = dealer[1]
+            dealerEntry = historyEntry[-1]
+            dealerHand = dealerEntry[1]
             
             # Exclude the last handEntry (dealer's)
-            for handEntry in historyEntry[:-1]:
-                hand = handEntry[1]
-                result = handEntry[2]
-    
+            for (playerID, hand, result) in historyEntry[:-1]:
                 # get the win/loss/BJ net result
                 if Action.Double in list(hand.action):
                     result *= 2
@@ -320,13 +313,10 @@ class Game:
             netResult, totHands = handEV.get(count, (0, 0))
             totHands += len(self.players) - 1
             
-            dealer = historyEntry[-1]
-            dealerHand = dealer[1]
+            dealerEntry = historyEntry[-1]
+            dealerHand = dealerEntry[1]
             
-            for handEntry in historyEntry[:-1]:
-                hand = handEntry[1]
-                result = handEntry[2]
-                
+            for (playerID, hand, result) in historyEntry[:-1]:
                 numCards += len(hand.cards)
                 
                 # EV does not take into account betting amount
